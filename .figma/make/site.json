@@ -1,0 +1,11 @@
+{
+  "title": "Jadeite Systems \u00b7 System Admin",
+  "description": "Jadeite Glazing \u2014 System Admin portal: users, roles, teams, settings, integrations, sync errors, audit, data import, security and backups.",
+  "language": "en-GB",
+  "robots": {
+    "index": false
+  },
+  "icons": {
+    "icon": "favicon.png"
+  }
+}
