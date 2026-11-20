@@ -47,6 +47,14 @@ export function Security() {
               {row('What customers can see', 'Only their own job. Never internal notes or other customers.', <Tag tone="ok">Always</Tag>)}
             </div>
           </Card>
+          <Card>
+            <CardHead title="Customer and job data for System Admins" />
+            <div className="between" style={{ gap: 14 }}>
+              <span className="vstack" style={{ gap: 2 }}><b className="small">Let System Admins open customer and job records</b><span className="tiny muted">Off by default. Turn on only when a Director agrees, for example to fix a problem.</span></span>
+              <Switch on={st.sysData} onChange={v => { st.set('sysData', () => v); st.log(v ? 'Allowed System Admins to open customer data' : 'Stopped System Admins opening customer data', 'System Admin team', 'Sign-in', [['Customer and job data', v ? 'Off → On' : 'On → Off']]); toast(v ? 'Turned on · recorded in the audit history' : 'Turned off'); }} />
+            </div>
+            {st.sysData && <Tag tone="warn">On · remember to turn it off when you are done</Tag>}
+          </Card>
           <Card style={{ background: 'var(--tint)', borderColor: '#cfeee4' }}>
             <span className="hstack" style={{ gap: 8 }}><IconShieldLock size={18} color="#0b6e5c" /><b>Always on</b></span>
             <span className="small t2" style={{ lineHeight: 1.6 }}>Secure connections (TLS) everywhere · data and files encrypted when stored · files are private and only shared with the right people · passwords and keys stored safely.</span>

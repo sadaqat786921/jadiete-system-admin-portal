@@ -1,4 +1,4 @@
-// Users: staff accounts (invite, change role or team, unlock, reset two-step sign-in, sign out devices, deactivate / reactivate)
+// Users: staff accounts (invite, change role — the team follows the role, unlock, reset two-step sign-in, sign out devices, deactivate / reactivate)
 // and customer portal sign-in (unlock, send a new invite, turn access off or on).
 import React, { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -8,7 +8,7 @@ import {
 } from '@tabler/icons-react';
 import { PageHead, Card, CardHead, Tag, Avatar, Modal, Field, Check, Tabs, Empty, useToast } from '../components/ui';
 import { useStore, userById } from '../data/store';
-import { ROLES, ROLE_INFO, Role, User, UStatus, Cust } from '../data/admin';
+import { ROLES, ROLE_INFO, Role, User, UStatus, Cust, Fitter, SCOPE0, teamOf, roleLabel } from '../data/admin';
 
 export const statusTone = (s: string) => (s === 'Active' ? 'ok' : s === 'Locked' ? 'warn' : s === 'Invited' ? 'jade' : 'grey');
 
@@ -42,7 +42,7 @@ export default function Users() {
               {rows.map(u => (
                 <tr key={u.id} className="click" onClick={() => nav(`/users/${u.id}`)}>
                   <td><div className="hstack" style={{ gap: 10 }}><Avatar i={u.initials} size={34} bg={u.status === 'Deactivated' ? '#eef2f1' : undefined} /><div className="vstack" style={{ gap: 2 }}><b style={{ color: u.status === 'Deactivated' ? 'var(--muted)' : undefined }}>{u.name}</b><span className="tiny muted">{u.email}</span></div></div></td>
-                  <td><span className="hstack" style={{ gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: ROLE_INFO[u.role].color }} />{u.role}</span></td>
+                  <td><span className="hstack" style={{ gap: 6 }}><span style={{ width: 8, height: 8, borderRadius: 4, background: ROLE_INFO[u.role].color }} />{roleLabel(u)}</span></td>
                   <td className="t2">{u.team}</td>
                   <td className="t2">{ROLE_INFO[u.role].apps}</td>
                   <td>{u.mfa === 'On' ? <span className="small t2">On · {u.mfaWay}</span> : <Tag tone="warn">Not set up</Tag>}</td>
@@ -61,24 +61,32 @@ export default function Users() {
   );
 }
 
-function InviteModal({ onClose, onDone }: { onClose: () => void; onDone: (id: string) => void }) {
+const FITTERS: Fitter[] = ['Lead fitter', 'Fitter'];
+const FitterPick = ({ v, set }: { v: Fitter; set: (f: Fitter) => void }) => (
+  <Field label="Lead fitter or fitter?" hint="The lead fitter runs the job on site and signs it off with the customer">
+    <div className="hstack" style={{ gap: 8 }}>{FITTERS.map(x => <button key={x} type="button" className={`chip ${v === x ? 'on' : ''}`} onClick={() => set(x)}>{x}</button>)}</div>
+  </Field>
+);
+
+// Add a user. Opened from Users (pick a role) or from a team (the role is already set).
+export function InviteModal({ role: fixed, onClose, onDone }: { role?: Role; onClose: () => void; onDone: (id: string) => void }) {
   const st = useStore();
   const toast = useToast();
-  const [f, setF] = useState({ first: '', last: '', email: '', phone: '', role: 'Office Admin' as Role, team: 'of' });
+  const [f, setF] = useState({ first: '', last: '', email: '', phone: '', role: (fixed || 'Office Admin') as Role, fitter: 'Fitter' as Fitter });
   const ok = f.first.trim() && f.last.trim() && /.+@.+\..+/.test(f.email) && f.phone.replace(/\D/g, '').length >= 10;
   const taken = st.users.some(u => u.email.toLowerCase() === f.email.trim().toLowerCase());
+  const team = teamOf(f.role);
   const save = () => {
     const id = 'u' + Date.now();
     const name = `${f.first.trim()} ${f.last.trim()}`;
-    const team = st.teams.find(t => t.id === f.team)!;
-    const u: User = { id, name, initials: (f.first[0] + f.last[0]).toUpperCase(), role: f.role, email: f.email.trim(), phone: f.phone.trim(), team: team.name, status: 'Invited', mfa: 'Not set up', last: 'Never', devices: [], since: 'Invited today', note: 'Invite sent today · not opened yet' };
+    const u: User = { id, name, initials: (f.first[0] + f.last[0]).toUpperCase(), role: f.role, ...(f.role === 'Installer' ? { fitter: f.fitter } : {}), email: f.email.trim(), phone: f.phone.trim(), team, status: 'Invited', mfa: 'Not set up', last: 'Never', devices: [], since: 'Invited today', note: 'Invite sent today · not opened yet' };
     st.set('users', us => [...us, u]);
-    st.set('teams', ts => ts.map(t => (t.id === f.team ? { ...t, members: [...t.members, id] } : t)));
-    st.log('Invited a new user', name, 'Users', [['Role', `— → ${f.role}`], ['Team', `— → ${team.name}`]]);
+    st.log('Added a user', name, 'Users', [['Role', `— → ${roleLabel(u)}`], ['Team', `— → ${team}`]]);
     toast(`Invite sent to ${f.email.trim()}`); onClose(); onDone(id);
   };
+  const title = fixed ? `Add ${fixed === 'Sales' ? 'a salesperson' : /^[AEIOU]/.test(fixed) ? `an ${fixed.toLowerCase()}` : `a ${fixed.toLowerCase()}`}` : 'Add a user';
   return (
-    <Modal title="Add a user" sub="They get an email to set their password and two-step sign-in. The link works for 7 days." onClose={onClose} width={620}
+    <Modal title={title} sub="They get an email to set their password and two-step sign-in. The link works for 7 days." onClose={onClose} width={620}
       footer={<><button className="btn btn-grey" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!ok || taken} onClick={save}><IconMailForward size={16} />Send invite</button></>}>
       <div className="grid-2">
         <Field label="First name"><input className="input" value={f.first} onChange={e => setF({ ...f, first: e.target.value })} /></Field>
@@ -87,12 +95,12 @@ function InviteModal({ onClose, onDone }: { onClose: () => void; onDone: (id: st
         <Field label="Mobile phone" hint="For sign-in codes"><input className="input" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} placeholder="07700 900 000" /></Field>
       </div>
       {taken && <div className="alert warn small"><IconAlertTriangle size={16} />Someone already uses this email.</div>}
-      <Field label="Role"><div className="grid-3">{ROLES.map(r => (
-        <button key={r} type="button" className="doc-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4, borderColor: f.role === r ? 'var(--primary)' : undefined, background: f.role === r ? 'var(--tint)' : undefined }} onClick={() => setF({ ...f, role: r, team: st.teams.find(t => (r === 'Sales' ? t.id === 'sa' : r === 'Surveyor' ? t.id === 'su' : r === 'Installer' ? t.id === 'fl' : r === 'Office Admin' ? t.id === 'of' : t.id === 'mg'))!.id })}>
+      {!fixed && <Field label="Role"><div className="grid-3">{ROLES.map(r => (
+        <button key={r} type="button" className="doc-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 4, borderColor: f.role === r ? 'var(--primary)' : undefined, background: f.role === r ? 'var(--tint)' : undefined }} onClick={() => setF({ ...f, role: r })}>
           <b className="small">{r}</b><span className="tiny muted">{ROLE_INFO[r].apps}</span>
-        </button>))}</div></Field>
-      <span className="small t2">{ROLE_INFO[f.role].about}.</span>
-      <Field label="Team"><select className="select" value={f.team} onChange={e => setF({ ...f, team: e.target.value })}>{st.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Field>
+        </button>))}</div></Field>}
+      {f.role === 'Installer' && <FitterPick v={f.fitter} set={x => setF({ ...f, fitter: x })} />}
+      <div className="alert info small"><IconInfoCircle size={16} /><span>{ROLE_INFO[f.role].about}. They join the <b>{team}</b> team.</span></div>
     </Modal>
   );
 }
@@ -110,11 +118,11 @@ export function UserDetail() {
   const history = st.audit.filter(x => x.record.includes(u.name) || x.who === u.name).slice(0, 8);
   const unlock = () => { upd({ status: 'Active', note: undefined }); st.log('Unlocked an account', u.name, 'Sign-in', [['Status', 'Locked → Active']]); toast(`${u.name.split(' ')[0]} can sign in again`); };
   const resend = () => { upd({ note: 'Invite sent again today · not opened yet' }); st.log('Sent an invite again', u.name, 'Users'); toast(`Invite sent again to ${u.email}`); };
-  const cancelInvite = () => { st.set('users', us => us.filter(x => x.id !== u.id)); st.set('teams', ts => ts.map(t => ({ ...t, members: t.members.filter(m => m !== u.id) }))); st.log('Cancelled an invite', u.name, 'Users'); toast('Invite cancelled'); nav('/users'); };
+  const cancelInvite = () => { st.set('users', us => us.filter(x => x.id !== u.id)); st.log('Cancelled an invite', u.name, 'Users'); toast('Invite cancelled'); nav('/users'); };
   const acts = u.status === 'Deactivated' ? [] : [
     ...(u.status === 'Locked' ? [{ l: 'Unlock account', i: IconLockOpen, on: unlock, primary: true }] : []),
     ...(u.status === 'Invited' ? [{ l: 'Send invite again', i: IconMailForward, on: resend, primary: true }] : []),
-    { l: 'Change role or team', i: IconShieldLock, on: () => setModal('role') },
+    { l: 'Change role', i: IconShieldLock, on: () => setModal('role') },
     { l: 'Edit details', i: IconPencil, on: () => setModal('edit') },
     ...(u.status !== 'Invited' ? [{ l: u.mfa === 'On' ? 'Reset two-step sign-in' : 'Remind to set up two-step sign-in', i: IconKey, on: () => (u.mfa === 'On' ? setModal('mfa') : (st.log('Sent a two-step sign-in reminder', u.name, 'Sign-in'), toast(`Reminder sent to ${u.name.split(' ')[0]}`))) }] : []),
   ];
@@ -130,10 +138,10 @@ export function UserDetail() {
           <Card>
             <div className="hstack" style={{ gap: 16 }}>
               <Avatar i={u.initials} size={64} bg={ROLE_INFO[u.role].color} fg="#fff" />
-              <div className="vstack grow" style={{ gap: 4 }}><b style={{ fontSize: 20 }}>{u.name}</b><span className="t2">{u.role} · {u.team}</span><span className="hstack" style={{ gap: 8 }}><Tag tone={statusTone(u.status)}>{u.status}</Tag>{u.mfa === 'Not set up' && u.status !== 'Invited' && <Tag tone="warn">No two-step sign-in</Tag>}</span></div>
+              <div className="vstack grow" style={{ gap: 4 }}><b style={{ fontSize: 20 }}>{u.name}</b><span className="t2">{roleLabel(u)} · {u.team} team</span><span className="hstack" style={{ gap: 8 }}><Tag tone={statusTone(u.status)}>{u.status}</Tag>{u.mfa === 'Not set up' && u.status !== 'Invited' && <Tag tone="warn">No two-step sign-in</Tag>}</span></div>
             </div>
             <div className="dl-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 4 }}>
-              {[['Email', u.email], ['Mobile', u.phone], ['Uses', ROLE_INFO[u.role].apps], ['Can see', st.scope[u.role]], ['Two-step sign-in', u.mfa === 'On' ? `On · ${u.mfaWay}` : 'Not set up'], ['Joined', u.since], ['Last signed in', u.last], ...(u.work ? [['Their work', u.work]] : [])].map(([k, v]) => <div key={k} className="vstack" style={{ gap: 2 }}><span className="tiny muted">{k}</span><b className="small">{v}</b></div>)}
+              {[['Email', u.email], ['Mobile', u.phone], ['Uses', ROLE_INFO[u.role].apps], ['Can see', SCOPE0[u.role]], ['Two-step sign-in', u.mfa === 'On' ? `On · ${u.mfaWay}` : 'Not set up'], ['Joined', u.since], ['Last signed in', u.last], ...(u.work ? [['Their work', u.work]] : [])].map(([k, v]) => <div key={k} className="vstack" style={{ gap: 2 }}><span className="tiny muted">{k}</span><b className="small">{v}</b></div>)}
             </div>
           </Card>
           <Card>
@@ -158,7 +166,7 @@ export function UserDetail() {
             {acts.map(x => <button key={x.l} className={`btn ${(x as any).primary ? 'btn-primary' : 'btn-outline'} btn-block`} style={{ justifyContent: 'flex-start' }} onClick={x.on}><x.i size={16} />{x.l}</button>)}
           </Card>}
           <Card>
-            <CardHead title={`What a ${u.role.toLowerCase()} can do`} right={<Link to={`/roles?role=${encodeURIComponent(u.role)}`} className="link">Permissions</Link>} />
+            <CardHead title={`What ${u.role === 'Office Admin' ? 'an office admin' : `a ${u.role.toLowerCase()}`} can do`} right={<Link to={`/teams?role=${encodeURIComponent(u.role)}`} className="link">See all</Link>} />
             <span className="small t2">{ROLE_INFO[u.role].about}.</span>
           </Card>
         </div>
@@ -175,7 +183,7 @@ export function UserDetail() {
       {modal === 'reactivate' && (
         <Modal title={`Reactivate ${u.name}?`} sub="They get an email to sign in again" onClose={() => setModal(null)} width={500}
           footer={<><button className="btn btn-grey" onClick={() => setModal(null)}>Cancel</button><button className="btn btn-primary" onClick={() => { upd({ status: 'Invited', note: 'Reactivated today · invite sent', last: u.last }); st.log('Reactivated a user', u.name, 'Users', [['Status', 'Deactivated → Invited']]); toast(`Invite sent to ${u.email}`); setModal(null); }}>Reactivate and send invite</button></>}>
-          <span className="t2">They come back as {u.role} in {u.team}. Their old customers are not given back automatically.</span>
+          <span className="t2">They come back as {roleLabel(u)} in the {u.team} team. Their old customers are not given back automatically.</span>
         </Modal>
       )}
     </>
@@ -186,22 +194,22 @@ function RoleModal({ u, onClose }: { u: User; onClose: () => void }) {
   const st = useStore();
   const toast = useToast();
   const [role, setRole] = useState<Role>(u.role);
-  const [team, setTeam] = useState(st.teams.find(t => t.name === u.team)?.id || 'of');
+  const [fitter, setFitter] = useState<Fitter>(u.fitter || 'Fitter');
   const [why, setWhy] = useState('');
-  const tName = st.teams.find(t => t.id === team)!.name;
-  const changed = role !== u.role || tName !== u.team;
+  const team = teamOf(role);
+  const next = { role, fitter: role === 'Installer' ? fitter : undefined };
+  const changed = role !== u.role || (role === 'Installer' && fitter !== (u.fitter || 'Fitter'));
   const save = () => {
-    st.set('users', us => us.map(x => (x.id === u.id ? { ...x, role, team: tName } : x)));
-    st.set('teams', ts => ts.map(t => ({ ...t, members: t.id === team ? Array.from(new Set([...t.members, u.id])) : t.members.filter(m => m !== u.id) })));
-    st.log('Changed role or team', u.name, 'Roles', [...(role !== u.role ? [['Role', `${u.role} → ${role}`] as [string, string]] : []), ...(tName !== u.team ? [['Team', `${u.team} → ${tName}`] as [string, string]] : [])], why.trim());
+    st.set('users', us => us.map(x => (x.id === u.id ? { ...x, ...next, team } : x)));
+    st.log('Changed a role', u.name, 'Users', [['Role', `${roleLabel(u)} → ${roleLabel(next)}`], ...(team !== u.team ? [['Team', `${u.team} → ${team}`] as [string, string]] : [])], why.trim());
     toast('Saved · recorded in the audit history'); onClose();
   };
   return (
-    <Modal title="Change role or team" sub={u.name} onClose={onClose} width={560}
+    <Modal title="Change role" sub={u.name} onClose={onClose} width={560}
       footer={<><button className="btn btn-grey" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!changed || why.trim().length < 3} onClick={save}>Save change</button></>}>
       <Field label="Role"><select className="select" value={role} onChange={e => setRole(e.target.value as Role)}>{ROLES.map(r => <option key={r}>{r}</option>)}</select></Field>
-      <span className="small t2">{ROLE_INFO[role].about} · uses {ROLE_INFO[role].apps.toLowerCase()}.</span>
-      <Field label="Team"><select className="select" value={team} onChange={e => setTeam(e.target.value)}>{st.teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Field>
+      {role === 'Installer' && <FitterPick v={fitter} set={setFitter} />}
+      <div className="alert info small"><IconInfoCircle size={16} /><span>{ROLE_INFO[role].about}. {team === u.team ? `Stays in the ${team} team.` : `Moves from the ${u.team} team to the ${team} team.`}</span></div>
       {role !== u.role && <div className="alert warn small"><IconAlertTriangle size={16} />{u.name.split(' ')[0]} will see different things straight away. Anything they were working on stays with them until the office moves it.</div>}
       <Field label="Why? (required)" hint="Saved in the audit history"><input className="input" value={why} onChange={e => setWhy(e.target.value)} placeholder="For example: moved from sales to the office" /></Field>
     </Modal>

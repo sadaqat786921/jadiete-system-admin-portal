@@ -5,7 +5,7 @@ import { IconUsers, IconAlertTriangle, IconLock, IconActivity, IconArrowRight, I
 import { Card, CardHead, Stat, Tag, Tile, Avatar, Progress } from '../components/ui';
 import { useStore } from '../data/store';
 import { useAlerts } from '../components/Layout';
-import { IMG, HEALTH, ROLES, ROLE_INFO, me } from '../data/admin';
+import { IMG, HEALTH, ROLE_INFO, TEAMS, me } from '../data/admin';
 
 export function IntegLogo({ logo, color, size = 40 }: { logo: string; color: string; size?: number }) {
   return <span className="tile" style={{ width: size, height: size, borderRadius: 10, background: color, color: '#fff', fontWeight: 700, fontSize: size * 0.34 }}>{logo}</span>;
@@ -96,9 +96,9 @@ export default function Overview() {
             <div className="hstack" style={{ gap: 12 }}><Tile icon={<IconShieldCheck size={20} />} color="#1f9d5b" /><span className="vstack" style={{ gap: 2 }}><b className="small">Restore tested {st.lastRestore.when}</b><span className="tiny muted">{st.lastRestore.ok ? 'Passed' : 'Failed'} · took {st.lastRestore.took} (target 4 hours)</span></span></div>
           </Card>
           <Card>
-            <CardHead title="People by role" right={<Link to="/roles" className="link">Permissions</Link>} />
-            {ROLES.map(r => { const n = active.filter(u => u.role === r).length; return (
-              <Link key={r} to={`/users?role=${encodeURIComponent(r)}`} className="vstack" style={{ gap: 4 }}><span className="between small"><span>{r}</span><b>{n}</b></span><Progress value={(n / active.length) * 100} color={ROLE_INFO[r].color} /></Link>
+            <CardHead title="People in each team" right={<Link to="/teams" className="link">Teams</Link>} />
+            {TEAMS.map(({ role: r, name }) => { const n = active.filter(u => u.role === r).length; return (
+              <Link key={r} to={`/teams#team-${r.replace(' ', '-')}`} className="vstack" style={{ gap: 4 }}><span className="between small"><span>{name}</span><b>{n}</b></span><Progress value={(n / active.length) * 100} color={ROLE_INFO[r].color} /></Link>
             ); })}
           </Card>
           <Card style={{ background: 'var(--tint)', borderColor: '#cfeee4' }}>

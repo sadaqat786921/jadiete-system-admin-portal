@@ -1,113 +1,92 @@
-// Teams: groups of people with a lead and an area (add, edit, add or remove members, delete an empty team).
+// Teams: fixed, one team per role (Office Admin, Sales, Surveyors, Installers, Directors, System Admin).
+// Adding someone to a team gives them that role. Roles and what each one can do are set by Jadeite and cannot be changed here.
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { IconPlus, IconPencil, IconTrash, IconUserPlus, IconX, IconMapPin, IconCrown, IconUsersGroup } from '@tabler/icons-react';
-import { PageHead, Card, Avatar, Modal, Field, Tag, Empty, useToast } from '../components/ui';
-import { useStore, userById } from '../data/store';
-import { Team } from '../data/admin';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { IconUserPlus, IconInfoCircle, IconLock, IconEye, IconChevronRight } from '@tabler/icons-react';
+import { PageHead, Card, Avatar, Modal, Tag } from '../components/ui';
+import { useStore } from '../data/store';
+import { TEAMS, Team, ROLE_INFO, AREAS, MATRIX0, SCOPE0, Level, roleLabel } from '../data/admin';
+import { InviteModal, statusTone } from './Users';
+
+const tone: Record<Level, string> = { Full: '#0b6e5c', View: '#2f6fde', Own: '#9a6f00', None: '#8a9794' };
+const bg: Record<Level, string> = { Full: '#ebf7f3', View: '#eaf1fd', Own: '#fdf6e3', None: '#f4f6f5' };
+const word: Record<Level, string> = { Full: 'Full', View: 'View only', Own: 'Only theirs', None: 'No access' };
 
 export default function Teams() {
   const st = useStore();
-  const toast = useToast();
-  const [edit, setEdit] = useState<Team | 'new' | null>(null);
+  const nav = useNavigate();
+  const [sp, setSp] = useSearchParams();
   const [add, setAdd] = useState<Team | null>(null);
-  const [del, setDel] = useState<Team | null>(null);
-  const remove = (t: Team, id: string) => {
-    const u = userById(st.users, id)!;
-    st.set('teams', ts => ts.map(x => (x.id === t.id ? { ...x, members: x.members.filter(m => m !== id), lead: x.lead === id ? x.members.find(m => m !== id) || '' : x.lead } : x)));
-    st.set('users', us => us.map(x => (x.id === id ? { ...x, team: 'No team' } : x)));
-    st.log('Removed someone from a team', `${t.name} · ${u.name}`, 'Teams'); toast(`${u.name} removed from ${t.name}`);
-  };
+  const can = TEAMS.find(t => t.role === sp.get('role')) || null;
   return (
     <>
-      <PageHead title="Teams" crumbs={[{ label: 'Overview', to: '/' }, { label: 'Teams' }]} actions={<button className="btn btn-primary" onClick={() => setEdit('new')}><IconPlus size={16} />New team</button>} />
-      <div className="grid-2">
-        {st.teams.map(t => {
-          const lead = userById(st.users, t.lead);
+      <PageHead title="Teams" crumbs={[{ label: 'Overview', to: '/' }, { label: 'Teams' }]} />
+      <div className="alert info"><IconInfoCircle size={18} /><span>There is one team for each role, and they are set for the whole platform. When you add someone, they join the team for their role and stay in it. Use the button on each team to add someone.</span></div>
+      <div className="grid-3">
+        {TEAMS.map(t => {
+          const n = st.users.filter(u => u.role === t.role && u.status !== 'Deactivated').length;
           return (
-            <Card key={t.id}>
-              <div className="between" style={{ alignItems: 'flex-start' }}>
-                <div className="vstack" style={{ gap: 3 }}><b style={{ fontSize: 16 }}>{t.name}</b><span className="small t2">{t.about}</span><span className="hstack tiny muted" style={{ gap: 6 }}><IconMapPin size={13} />{t.area}</span></div>
-                <span className="hstack" style={{ gap: 4 }}>
-                  <button className="icon-btn" aria-label={`Edit ${t.name}`} onClick={() => setEdit(t)}><IconPencil size={17} /></button>
-                  <button className="icon-btn" aria-label={`Delete ${t.name}`} onClick={() => setDel(t)}><IconTrash size={17} /></button>
-                </span>
+            <a key={t.role} href={`#team-${t.role.replace(' ', '-')}`} className="card" style={{ flexDirection: 'row', gap: 12, alignItems: 'center', padding: 14 }}>
+              <span style={{ width: 10, alignSelf: 'stretch', borderRadius: 5, background: ROLE_INFO[t.role].color }} />
+              <span className="vstack grow" style={{ gap: 2 }}><b>{t.name}</b><span className="tiny muted">{ROLE_INFO[t.role].apps}</span></span>
+              <b style={{ fontSize: 22 }}>{n}</b>
+            </a>
+          );
+        })}
+      </div>
+      <div className="grid-2" style={{ alignItems: 'start' }}>
+        {TEAMS.map(t => {
+          const people = st.users.filter(u => u.role === t.role);
+          const active = people.filter(u => u.status !== 'Deactivated');
+          const lead = t.role === 'Installer' ? active.filter(u => u.fitter === 'Lead fitter').length : 0;
+          return (
+            <Card key={t.role}>
+              <div id={`team-${t.role.replace(' ', '-')}`} className="between" style={{ alignItems: 'flex-start', gap: 12, scrollMarginTop: 90 }}>
+                <div className="hstack" style={{ gap: 12, alignItems: 'flex-start' }}>
+                  <span style={{ width: 6, height: 44, borderRadius: 3, background: ROLE_INFO[t.role].color }} />
+                  <div className="vstack" style={{ gap: 3 }}>
+                    <b style={{ fontSize: 16 }}>{t.name}</b>
+                    <span className="small t2">{t.about}</span>
+                    <span className="tiny muted">{active.length} {active.length === 1 ? 'person' : 'people'}{t.role === 'Installer' ? ` · ${lead} lead fitter${lead === 1 ? '' : 's'}, ${active.length - lead} fitter${active.length - lead === 1 ? '' : 's'}` : ''} · uses {ROLE_INFO[t.role].apps.toLowerCase()}</span>
+                  </div>
+                </div>
+                <Tag tone="grey" icon={<IconLock size={12} />}>Fixed</Tag>
               </div>
               <div className="list">
-                {t.members.map(id => { const u = userById(st.users, id); if (!u) return null; return (
-                  <div key={id} className="hstack" style={{ gap: 10, padding: '8px 0' }}>
-                    <Avatar i={u.initials} size={32} />
-                    <Link to={`/users/${u.id}`} className="vstack grow" style={{ gap: 1 }}><b className="small">{u.name}</b><span className="tiny muted">{u.role}{u.status !== 'Active' ? ` · ${u.status}` : ''}</span></Link>
-                    {t.lead === id ? <Tag tone="jade" icon={<IconCrown size={12} />}>Lead</Tag> : <button className="link tiny" onClick={() => { st.set('teams', ts => ts.map(x => (x.id === t.id ? { ...x, lead: id } : x))); st.log('Changed a team lead', t.name, 'Teams', [['Lead', `${lead?.name || '—'} → ${u.name}`]]); toast(`${u.name} now leads ${t.name}`); }}>Make lead</button>}
-                    <button className="icon-btn" aria-label={`Remove ${u.name}`} onClick={() => remove(t, id)} style={{ width: 30, height: 30 }}><IconX size={15} /></button>
-                  </div>
-                ); })}
-                {t.members.length === 0 && <span className="small muted" style={{ padding: '8px 0' }}>No one in this team yet.</span>}
+                {people.map(u => (
+                  <Link key={u.id} to={`/users/${u.id}`} className="hstack" style={{ gap: 10, padding: '8px 0' }}>
+                    <Avatar i={u.initials} size={32} bg={u.status === 'Deactivated' ? '#eef2f1' : undefined} />
+                    <span className="vstack grow" style={{ gap: 1 }}><b className="small" style={{ color: u.status === 'Deactivated' ? 'var(--muted)' : undefined }}>{u.name}</b><span className="tiny muted">{roleLabel(u)}</span></span>
+                    {u.status !== 'Active' && <Tag tone={statusTone(u.status)}>{u.status}</Tag>}
+                    <IconChevronRight size={15} color="#6b7a78" />
+                  </Link>
+                ))}
+                {people.length === 0 && <span className="small muted" style={{ padding: '8px 0' }}>No one in this team yet.</span>}
               </div>
-              <button className="btn btn-outline btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => setAdd(t)}><IconUserPlus size={15} />Add people</button>
+              <div className="hstack" style={{ gap: 8, flexWrap: 'wrap' }}>
+                <button className="btn btn-primary btn-sm" onClick={() => setAdd(t)}><IconUserPlus size={15} />{t.add}</button>
+                <button className="btn btn-outline btn-sm" onClick={() => setSp({ role: t.role })}><IconEye size={15} />What they can do</button>
+              </div>
             </Card>
           );
         })}
       </div>
-      {st.teams.length === 0 && <Empty icon={<IconUsersGroup size={22} />} title="No teams yet" />}
-      {edit && <TeamModal t={edit === 'new' ? null : edit} onClose={() => setEdit(null)} />}
-      {add && <AddModal t={add} onClose={() => setAdd(null)} />}
-      {del && (
-        <Modal title={`Delete ${del.name}?`} onClose={() => setDel(null)} width={480}
-          footer={<><button className="btn btn-grey" onClick={() => setDel(null)}>Cancel</button><button className="btn btn-danger" disabled={del.members.length > 0} onClick={() => { st.set('teams', ts => ts.filter(x => x.id !== del.id)); st.log('Deleted a team', del.name, 'Teams'); toast('Team deleted'); setDel(null); }}>Delete team</button></>}>
-          <span className="t2">{del.members.length ? `Move the ${del.members.length} people in this team to another team first.` : 'Nobody is in this team, so it can be deleted.'}</span>
+      {add && <InviteModal role={add.role} onClose={() => setAdd(null)} onDone={id => nav(`/users/${id}`)} />}
+      {can && (
+        <Modal title={`What ${can.name.toLowerCase() === 'system admin' ? 'a system admin' : `the ${can.name.toLowerCase()} team`} can do`} sub="Set for the whole platform · cannot be changed here" onClose={() => setSp({})} width={600}
+          footer={<button className="btn btn-primary" onClick={() => setSp({})}>Close</button>}>
+          <div className="between small" style={{ gap: 12 }}><span className="t2">Records they can reach</span><b>{SCOPE0[can.role]}</b></div>
+          <div className="list" style={{ border: '1px solid var(--border)', borderRadius: 12, padding: '0 14px' }}>
+            {AREAS.map((a, i) => { const v = MATRIX0[can.role][i]; return (
+              <div key={a} className="between" style={{ gap: 12, padding: '9px 0' }}>
+                <span className="small">{a}</span>
+                <span className="tiny" style={{ fontWeight: 600, color: tone[v], background: bg[v], borderRadius: 8, padding: '4px 10px' }}>{word[v]}</span>
+              </div>
+            ); })}
+          </div>
+          {can.role === 'System Admin' && <span className="small t2">System Admins cannot open customer or job records unless that is switched on in Sign-in and security.</span>}
         </Modal>
       )}
     </>
-  );
-}
-
-function TeamModal({ t, onClose }: { t: Team | null; onClose: () => void }) {
-  const st = useStore();
-  const toast = useToast();
-  const [f, setF] = useState({ name: t?.name || '', about: t?.about || '', area: t?.area || '' });
-  const save = () => {
-    if (t) {
-      st.set('teams', ts => ts.map(x => (x.id === t.id ? { ...x, ...f } : x)));
-      if (f.name !== t.name) st.set('users', us => us.map(u => (u.team === t.name ? { ...u, team: f.name } : u)));
-      st.log('Edited a team', f.name, 'Teams', (['name', 'about', 'area'] as const).filter(k => f[k] !== t[k]).map(k => [k === 'name' ? 'Name' : k === 'about' ? 'What they do' : 'Area', `${t[k]} → ${f[k]}`]));
-    } else {
-      st.set('teams', ts => [...ts, { id: 't' + Date.now(), ...f, lead: '', members: [] }]);
-      st.log('Created a team', f.name, 'Teams');
-    }
-    toast(t ? 'Team saved' : 'Team created'); onClose();
-  };
-  return (
-    <Modal title={t ? `Edit ${t.name}` : 'New team'} onClose={onClose} width={520} footer={<><button className="btn btn-grey" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!f.name.trim()} onClick={save}>{t ? 'Save' : 'Create team'}</button></>}>
-      <Field label="Team name"><input className="input" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} placeholder="For example: Fitters · Nottingham" /></Field>
-      <Field label="What they do"><input className="input" value={f.about} onChange={e => setF({ ...f, about: e.target.value })} /></Field>
-      <Field label="Area they cover"><input className="input" value={f.area} onChange={e => setF({ ...f, area: e.target.value })} /></Field>
-    </Modal>
-  );
-}
-
-function AddModal({ t, onClose }: { t: Team; onClose: () => void }) {
-  const st = useStore();
-  const toast = useToast();
-  const options = st.users.filter(u => u.status !== 'Deactivated' && !t.members.includes(u.id));
-  const [pick, setPick] = useState<string[]>([]);
-  const save = () => {
-    st.set('teams', ts => ts.map(x => (x.id === t.id ? { ...x, members: [...x.members, ...pick], lead: x.lead || pick[0] } : { ...x, members: x.members.filter(m => !pick.includes(m)) })));
-    st.set('users', us => us.map(u => (pick.includes(u.id) ? { ...u, team: t.name } : u)));
-    st.log('Added people to a team', t.name, 'Teams', pick.map(id => { const u = userById(st.users, id)!; return [u.name, `${u.team} → ${t.name}`]; }));
-    toast(`${pick.length} added to ${t.name}`); onClose();
-  };
-  return (
-    <Modal title={`Add people to ${t.name}`} sub="Each person is in one team. Adding them here moves them from their old team." onClose={onClose} width={560}
-      footer={<><button className="btn btn-grey" onClick={onClose}>Cancel</button><button className="btn btn-primary" disabled={!pick.length} onClick={save}>Add {pick.length || ''}</button></>}>
-      <div className="list" style={{ maxHeight: 380, overflowY: 'auto' }}>
-        {options.map(u => (
-          <label key={u.id} className="hstack" style={{ gap: 10, padding: '8px 0', cursor: 'pointer' }}>
-            <input type="checkbox" checked={pick.includes(u.id)} onChange={e => setPick(p => (e.target.checked ? [...p, u.id] : p.filter(x => x !== u.id)))} style={{ width: 18, height: 18, accentColor: '#00c7a1' }} />
-            <Avatar i={u.initials} size={30} /><span className="vstack grow" style={{ gap: 1 }}><b className="small">{u.name}</b><span className="tiny muted">{u.role} · now in {u.team}</span></span>
-          </label>
-        ))}
-      </div>
-    </Modal>
   );
 }

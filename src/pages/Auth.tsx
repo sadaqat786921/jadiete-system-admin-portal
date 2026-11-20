@@ -26,9 +26,9 @@ export function Login() {
         <div className="vstack" style={{ gap: 14 }}>
           <span className="glass-pill" style={{ alignSelf: 'flex-start' }}>Jadeite Glazing · System Admin</span>
           <h1 style={{ fontSize: 34, lineHeight: 1.2, letterSpacing: -0.5 }}>Keep the whole platform safe, connected and running.</h1>
-          <p style={{ fontSize: 15, color: '#d3e3de', lineHeight: 1.55 }}>Users and roles, settings, integrations and a full record of every change.</p>
+          <p style={{ fontSize: 15, color: '#d3e3de', lineHeight: 1.55 }}>Users and teams, settings, integrations and a full record of every change.</p>
           <div className="hstack" style={{ gap: 10, flexWrap: 'wrap' }}>
-            <span className="glass-pill"><IconUsers size={15} />Users and roles</span>
+            <span className="glass-pill"><IconUsers size={15} />Users and teams</span>
             <span className="glass-pill"><IconTool size={15} />Integrations</span>
             <span className="glass-pill"><IconShieldCheck size={15} />Audit history</span>
           </div>
@@ -80,7 +80,7 @@ export function Login() {
 
 const STEPS = [
   { photo: IMG.house, t: 'Everyone has the right access', d: 'Add people, give them a role and a team, and switch off access the moment someone leaves.',
-    pts: [[IconUsers, 'Users and teams', 'Invite staff, unlock accounts, sign out lost phones.', '#0b6e5c'], [IconLock, 'Roles and permissions', 'Decide who can see and change what.', '#0b6e5c'], [IconAlertTriangle, 'Two-step sign-in', 'Everyone signs in with a code as well.', '#e0a100']] },
+    pts: [[IconUsers, 'Users and teams', 'Invite staff, unlock accounts, sign out lost phones.', '#0b6e5c'], [IconLock, 'Fixed teams', 'One team per role. Add people straight into the right team.', '#0b6e5c'], [IconAlertTriangle, 'Two-step sign-in', 'Everyone signs in with a code as well.', '#e0a100']] },
   { photo: IMG.door, t: 'Set up the way the business works', d: 'Statuses, message templates and checklists are used across every portal and phone app.',
     pts: [[IconListDetails, 'Statuses and templates', 'Sales stages, customer messages and what customers see.', '#0b6e5c'], [IconCheck, 'Checklists', 'Survey, fitting and handover checks.', '#0b6e5c'], [IconHome, 'Customer portal', 'Only their own job, never internal notes.', '#1f9d5b']] },
   { photo: IMG.orangery, t: 'Connected and recorded', d: 'Framepoint, Outlook and Xero stay in step. Every important change is recorded with who, when and what changed.',

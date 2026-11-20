@@ -5,7 +5,7 @@ import { IconSearch, IconDownload, IconHistory, IconChevronRight } from '@tabler
 import { PageHead, Tag, Drawer, Empty, Avatar, useToast } from '../components/ui';
 import { useStore } from '../data/store';
 
-const AREAS = ['All', 'Users', 'Roles', 'Teams', 'Sign-in', 'Settings', 'Integrations', 'Jobs', 'Customers'];
+const AREAS = ['All', 'Users', 'Sign-in', 'Settings', 'Integrations', 'Jobs', 'Customers'];
 const SOURCES = ['All', 'System Admin', 'Office Admin', 'Sales portal', 'Director', 'Installer app', 'Phone app', 'Customer portal', 'Xero', 'Outlook', 'Framepoint'];
 const ini = (n: string) => n.split(/[ &]+/).filter(Boolean).map(p => p[0]).join('').slice(0, 2).toUpperCase();
 

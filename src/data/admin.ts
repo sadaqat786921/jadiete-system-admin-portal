@@ -13,8 +13,8 @@ export const ROLE_INFO: Record<Role, { apps: string; about: string; color: strin
   'Office Admin': { apps: 'Web', about: 'Runs enquiries, jobs, the diary and customers', color: '#0b6e5c' },
   Sales: { apps: 'Web and phone app', about: 'Their own customers, pipeline, quotes and tasks', color: '#00c7a1' },
   Surveyor: { apps: 'Web and phone app', about: 'Only the surveys and inspections booked for them', color: '#2f6fde' },
-  Installer: { apps: 'Phone app', about: 'Only the jobs booked with them and their job packs', color: '#e0a100' },
-  'System Admin': { apps: 'Web', about: 'Users, roles, settings, integrations and audit', color: '#6b7a78' },
+  Installer: { apps: 'Phone app', about: 'Fitters. Only the jobs booked with them and their job packs', color: '#e0a100' },
+  'System Admin': { apps: 'Web', about: 'Users, teams, settings, integrations and audit', color: '#6b7a78' },
 };
 
 export type Level = 'Full' | 'View' | 'Own' | 'None';
@@ -27,7 +27,7 @@ export const LEVELS: { id: Level; label: string; hint: string }[] = [
 export const AREAS = [
   'Dashboard and reports', 'Enquiries and customers', 'Sales pipeline and quotes', 'Appointments and tasks', 'Surveys', 'Orders and deliveries',
   'Installation diary', 'Snags and aftercare', 'Messages and email', 'Payments (from Xero)', 'Customer portal invites', 'Internal notes',
-  'Users and roles', 'Statuses, templates and checklists', 'Integrations and sync errors', 'Audit history',
+  'Users and teams', 'Statuses, templates and checklists', 'Integrations and sync errors', 'Audit history',
 ] as const;
 export type Area = typeof AREAS[number];
 const M = (s: string): Level[] => s.split('').map(c => ({ F: 'Full', V: 'View', O: 'Own', N: 'None' }[c] as Level));
@@ -47,43 +47,47 @@ export const SCOPE0: Record<Role, string> = {
 
 /* ---------- Users ---------- */
 export type UStatus = 'Active' | 'Invited' | 'Locked' | 'Deactivated';
+export type Fitter = 'Lead fitter' | 'Fitter';
 export type User = {
-  id: string; name: string; initials: string; role: Role; email: string; phone: string; team: string; status: UStatus;
+  id: string; name: string; initials: string; role: Role; email: string; phone: string; team: string; status: UStatus; fitter?: Fitter;
   mfa: 'On' | 'Not set up'; mfaWay?: 'Text message' | 'Authenticator app'; last: string; devices: { name: string; where: string; when: string }[];
   since: string; note?: string; work?: string;
 };
 const dev = (a: string, b = '16 Oct, 08:30') => [{ name: a, where: 'Leicester', when: b }];
 export const USERS0: User[] = [
-  { id: 'tf', name: 'Tom Fletcher', initials: 'TF', role: 'System Admin', email: 'tom.fletcher@jadeiteglazing.co.uk', phone: '07700 900 010', team: 'Management', status: 'Active', mfa: 'On', mfaWay: 'Authenticator app', last: 'Now', devices: dev('Windows · Chrome', 'Now'), since: 'Jan 2026' },
-  { id: 'jw', name: 'James Whitfield', initials: 'JW', role: 'Director', email: 'james.whitfield@jadeiteglazing.co.uk', phone: '07700 900 001', team: 'Management', status: 'Active', mfa: 'On', mfaWay: 'Authenticator app', last: 'Today, 07:55', devices: [{ name: 'MacBook · Safari', where: 'Leicester', when: 'Today, 07:55' }, { name: 'iPhone', where: 'Leicester', when: 'Yesterday' }], since: 'Jan 2026' },
-  { id: 'sm', name: 'Sarah Mitchell', initials: 'SM', role: 'Office Admin', email: 'sarah.mitchell@jadeiteglazing.co.uk', phone: '07700 900 011', team: 'Office', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 08:02', devices: dev('Windows · Edge', 'Today, 08:02'), since: 'Jan 2026' },
-  { id: 'km', name: 'Kate Morris', initials: 'KM', role: 'Office Admin', email: 'kate.morris@jadeiteglazing.co.uk', phone: '07700 900 012', team: 'Office', status: 'Invited', mfa: 'Not set up', last: 'Never', devices: [], since: 'Invited 14 Oct', note: 'Invite sent 14 Oct · not opened yet' },
+  { id: 'tf', name: 'Tom Fletcher', initials: 'TF', role: 'System Admin', email: 'tom.fletcher@jadeiteglazing.co.uk', phone: '07700 900 010', team: 'System Admin', status: 'Active', mfa: 'On', mfaWay: 'Authenticator app', last: 'Now', devices: dev('Windows · Chrome', 'Now'), since: 'Jan 2026' },
+  { id: 'jw', name: 'James Whitfield', initials: 'JW', role: 'Director', email: 'james.whitfield@jadeiteglazing.co.uk', phone: '07700 900 001', team: 'Directors', status: 'Active', mfa: 'On', mfaWay: 'Authenticator app', last: 'Today, 07:55', devices: [{ name: 'MacBook · Safari', where: 'Leicester', when: 'Today, 07:55' }, { name: 'iPhone', where: 'Leicester', when: 'Yesterday' }], since: 'Jan 2026' },
+  { id: 'sm', name: 'Sarah Mitchell', initials: 'SM', role: 'Office Admin', email: 'sarah.mitchell@jadeiteglazing.co.uk', phone: '07700 900 011', team: 'Office Admin', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 08:02', devices: dev('Windows · Edge', 'Today, 08:02'), since: 'Jan 2026' },
+  { id: 'km', name: 'Kate Morris', initials: 'KM', role: 'Office Admin', email: 'kate.morris@jadeiteglazing.co.uk', phone: '07700 900 012', team: 'Office Admin', status: 'Invited', mfa: 'Not set up', last: 'Never', devices: [], since: 'Invited 14 Oct', note: 'Invite sent 14 Oct · not opened yet' },
   { id: 'mh', name: 'Mike Harris', initials: 'MH', role: 'Sales', email: 'mike.harris@jadeiteglazing.co.uk', phone: '07700 900 101', team: 'Sales', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 08:40', devices: [{ name: 'iPhone · Jadeite app', where: 'Leicester', when: 'Today, 08:40' }, { name: 'Windows · Chrome', where: 'Leicester', when: 'Yesterday' }], since: 'Feb 2026', work: '9 customers, 4 open tasks' },
   { id: 'ec', name: 'Emma Clarke', initials: 'EC', role: 'Sales', email: 'emma.clarke@jadeiteglazing.co.uk', phone: '07700 900 102', team: 'Sales', status: 'Active', mfa: 'On', mfaWay: 'Authenticator app', last: 'Today, 09:10', devices: dev('Android · Jadeite app', 'Today, 09:10'), since: 'Feb 2026', work: '7 customers, 2 open tasks' },
   { id: 'jb', name: 'James Brook', initials: 'JB', role: 'Sales', email: 'james.brook@jadeiteglazing.co.uk', phone: '07700 900 103', team: 'Sales', status: 'Locked', mfa: 'On', mfaWay: 'Text message', last: 'Yesterday, 17:20', devices: dev('iPhone · Jadeite app', 'Yesterday'), since: 'Mar 2026', note: 'Locked today at 08:12 · wrong code 3 times', work: '5 customers, 1 open task' },
   { id: 'ps', name: 'Priya Shah', initials: 'PS', role: 'Surveyor', email: 'priya.shah@jadeiteglazing.co.uk', phone: '07700 900 104', team: 'Surveyors', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:40', devices: [{ name: 'iPhone · Jadeite app', where: 'Leicester', when: 'Today, 07:40' }, { name: 'iPad · Safari', where: 'Leicester', when: '14 Oct' }], since: 'Feb 2026', work: '3 visits booked' },
   { id: 'rk', name: 'Rob King', initials: 'RK', role: 'Surveyor', email: 'rob.king@jadeiteglazing.co.uk', phone: '07700 900 105', team: 'Surveyors', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 08:15', devices: dev('Android · Jadeite app', 'Today, 08:15'), since: 'Feb 2026', work: '2 visits booked' },
-  { id: 'dh', name: 'Dan Hughes', initials: 'DH', role: 'Installer', email: 'dan.hughes@jadeiteglazing.co.uk', phone: '07700 900 201', team: 'Fitters · Leicester', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:30', devices: dev('iPhone · Jadeite app', 'Today, 07:30'), since: 'Feb 2026' },
-  { id: 'lb', name: 'Lee Brooks', initials: 'LB', role: 'Installer', email: 'lee.brooks@jadeiteglazing.co.uk', phone: '07700 900 202', team: 'Fitters · Leicester', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:31', devices: dev('Android · Jadeite app', 'Today, 07:31'), since: 'Feb 2026' },
-  { id: 'cr', name: 'Chris Reid', initials: 'CR', role: 'Installer', email: 'chris.reid@jadeiteglazing.co.uk', phone: '07700 900 207', team: 'Fitters · Leicester', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Yesterday', devices: dev('iPhone · Jadeite app', 'Yesterday'), since: 'Mar 2026' },
-  { id: 'ak', name: 'Amir Khan', initials: 'AK', role: 'Installer', email: 'amir.khan@jadeiteglazing.co.uk', phone: '07700 900 203', team: 'Fitters · Yorkshire', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:05', devices: [{ name: 'iPhone · Jadeite app', where: 'Harrogate', when: 'Today, 07:05' }], since: 'Feb 2026', work: '2 jobs booked today' },
-  { id: 'jp', name: 'Joe Patel', initials: 'JP', role: 'Installer', email: 'joe.patel@jadeiteglazing.co.uk', phone: '07700 900 204', team: 'Fitters · Yorkshire', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:12', devices: [{ name: 'Android · Jadeite app', where: 'Harrogate', when: 'Today, 07:12' }], since: 'Feb 2026' },
-  { id: 'tw', name: 'Tom Wright', initials: 'TW', role: 'Installer', email: 'tom.wright@jadeiteglazing.co.uk', phone: '07700 900 205', team: 'Fitters · Yorkshire', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: '14 Oct', devices: [{ name: 'iPhone · Jadeite app', where: 'Leeds', when: '14 Oct' }], since: 'Feb 2026' },
-  { id: 'bc', name: 'Ben Cole', initials: 'BC', role: 'Installer', email: 'ben.cole@jadeiteglazing.co.uk', phone: '07700 900 206', team: 'Fitters · Yorkshire', status: 'Active', mfa: 'Not set up', last: '12 Oct', devices: [{ name: 'Android · Jadeite app', where: 'Leeds', when: '12 Oct' }], since: 'Sep 2026', note: 'Has not set up two-step sign-in yet' },
-  { id: 'sp', name: 'Sam Price', initials: 'SP', role: 'Installer', email: 'sam.price@jadeiteglazing.co.uk', phone: '07700 900 208', team: 'Fitters · Yorkshire', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: '14 Oct', devices: [{ name: 'iPhone · Jadeite app', where: 'Leeds', when: '14 Oct' }], since: 'Aug 2026' },
+  { id: 'dh', fitter: 'Lead fitter', name: 'Dan Hughes', initials: 'DH', role: 'Installer', email: 'dan.hughes@jadeiteglazing.co.uk', phone: '07700 900 201', team: 'Installers', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:30', devices: dev('iPhone · Jadeite app', 'Today, 07:30'), since: 'Feb 2026' },
+  { id: 'lb', fitter: 'Fitter', name: 'Lee Brooks', initials: 'LB', role: 'Installer', email: 'lee.brooks@jadeiteglazing.co.uk', phone: '07700 900 202', team: 'Installers', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:31', devices: dev('Android · Jadeite app', 'Today, 07:31'), since: 'Feb 2026' },
+  { id: 'cr', fitter: 'Fitter', name: 'Chris Reid', initials: 'CR', role: 'Installer', email: 'chris.reid@jadeiteglazing.co.uk', phone: '07700 900 207', team: 'Installers', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Yesterday', devices: dev('iPhone · Jadeite app', 'Yesterday'), since: 'Mar 2026' },
+  { id: 'ak', fitter: 'Lead fitter', name: 'Amir Khan', initials: 'AK', role: 'Installer', email: 'amir.khan@jadeiteglazing.co.uk', phone: '07700 900 203', team: 'Installers', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:05', devices: [{ name: 'iPhone · Jadeite app', where: 'Harrogate', when: 'Today, 07:05' }], since: 'Feb 2026', work: '2 jobs booked today' },
+  { id: 'jp', fitter: 'Fitter', name: 'Joe Patel', initials: 'JP', role: 'Installer', email: 'joe.patel@jadeiteglazing.co.uk', phone: '07700 900 204', team: 'Installers', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: 'Today, 07:12', devices: [{ name: 'Android · Jadeite app', where: 'Harrogate', when: 'Today, 07:12' }], since: 'Feb 2026' },
+  { id: 'tw', fitter: 'Fitter', name: 'Tom Wright', initials: 'TW', role: 'Installer', email: 'tom.wright@jadeiteglazing.co.uk', phone: '07700 900 205', team: 'Installers', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: '14 Oct', devices: [{ name: 'iPhone · Jadeite app', where: 'Leeds', when: '14 Oct' }], since: 'Feb 2026' },
+  { id: 'bc', fitter: 'Fitter', name: 'Ben Cole', initials: 'BC', role: 'Installer', email: 'ben.cole@jadeiteglazing.co.uk', phone: '07700 900 206', team: 'Installers', status: 'Active', mfa: 'Not set up', last: '12 Oct', devices: [{ name: 'Android · Jadeite app', where: 'Leeds', when: '12 Oct' }], since: 'Sep 2026', note: 'Has not set up two-step sign-in yet' },
+  { id: 'sp', fitter: 'Fitter', name: 'Sam Price', initials: 'SP', role: 'Installer', email: 'sam.price@jadeiteglazing.co.uk', phone: '07700 900 208', team: 'Installers', status: 'Active', mfa: 'On', mfaWay: 'Text message', last: '14 Oct', devices: [{ name: 'iPhone · Jadeite app', where: 'Leeds', when: '14 Oct' }], since: 'Aug 2026' },
   { id: 'gw', name: 'Gary Wells', initials: 'GW', role: 'Sales', email: 'gary.wells@jadeiteglazing.co.uk', phone: '07700 900 106', team: 'Sales', status: 'Deactivated', mfa: 'On', mfaWay: 'Text message', last: '30 Sep', devices: [], since: 'Feb 2026', note: 'Left the company 30 Sep · customers moved to Emma Clarke' },
 ];
 
 /* ---------- Teams ---------- */
-export type Team = { id: string; name: string; about: string; lead: string; area: string; members: string[] };
-export const TEAMS0: Team[] = [
-  { id: 'mg', name: 'Management', about: 'Directors and system admin', lead: 'jw', area: 'Head office', members: ['jw', 'tf'] },
-  { id: 'of', name: 'Office', about: 'Enquiries, jobs, diary and customers', lead: 'sm', area: 'Head office', members: ['sm', 'km'] },
-  { id: 'sa', name: 'Sales', about: 'Visits, quotes and follow-ups', lead: 'mh', area: 'Leicestershire and Yorkshire', members: ['mh', 'ec', 'jb'] },
-  { id: 'su', name: 'Surveyors', about: 'Final surveys and inspections', lead: 'ps', area: 'Leicestershire and Yorkshire', members: ['ps', 'rk'] },
-  { id: 'fl', name: 'Fitters · Leicester', about: 'Windows and doors', lead: 'dh', area: 'Leicester and Oadby', members: ['dh', 'lb', 'cr'] },
-  { id: 'fy', name: 'Fitters · Yorkshire', about: 'Orangeries, roofs, repairs', lead: 'ak', area: 'Harrogate, Leeds, Ripon', members: ['ak', 'jp', 'tw', 'bc', 'sp'] },
+// Teams are fixed: one team per role. Adding someone with a role puts them in that team. Nobody moves outside their role's team.
+export type Team = { role: Role; name: string; about: string; add: string };
+export const TEAMS: Team[] = [
+  { role: 'Office Admin', name: 'Office Admin', about: 'Run enquiries, jobs, the diary and customers', add: 'Add office admin' },
+  { role: 'Sales', name: 'Sales', about: 'Visit customers, quote and follow up', add: 'Add salesperson' },
+  { role: 'Surveyor', name: 'Surveyors', about: 'Final surveys and inspections', add: 'Add surveyor' },
+  { role: 'Installer', name: 'Installers', about: 'The fitters who fit the jobs. Each one is a lead fitter or a fitter.', add: 'Add installer' },
+  { role: 'Director', name: 'Directors', about: 'See the whole business and approve exceptions', add: 'Add director' },
+  { role: 'System Admin', name: 'System Admin', about: 'Look after users, settings and connections', add: 'Add system admin' },
 ];
+export const teamOf = (r: Role) => TEAMS.find(t => t.role === r)!.name;
+export const roleLabel = (u: { role: Role; fitter?: Fitter }) => (u.role === 'Installer' ? `Installer · ${u.fitter || 'Fitter'}` : u.role);
 
 /* ---------- Customer portal sign-in ---------- */
 export type Cust = { id: string; name: string; job: string; email: string; status: 'Active' | 'Invited' | 'Locked' | 'Turned off'; last: string; note?: string };
@@ -229,13 +233,13 @@ export const AUDIT0: Audit[] = [
   { id: 'a23', when: 'Yesterday, 14:10', day: 1, who: 'Sarah Mitchell', action: 'Overrode a diary clash', record: 'JG-10490 · installation', area: 'Jobs', source: 'Office Admin', before: [['Installer', 'Lee Brooks (booked elsewhere) → Lee Brooks']], reason: 'Lee finishes the other job by 11am' },
   { id: 'a22', when: '15 Oct, 15:10', day: 1, who: 'Sarah Mitchell', action: 'Invited a customer to the portal', record: 'JG-10490 · Mr & Mrs Lees', area: 'Customers', source: 'Office Admin' },
   { id: 'a21', when: '14 Oct, 12:02', day: 2, who: 'Tom Fletcher', action: 'Fixed a sync error', record: 'SE-217', area: 'Integrations', source: 'System Admin' },
-  { id: 'a20', when: '14 Oct, 10:20', day: 2, who: 'Tom Fletcher', action: 'Invited a new user', record: 'Kate Morris', area: 'Users', source: 'System Admin', before: [['Role', '— → Office Admin'], ['Team', '— → Office']] },
+  { id: 'a20', when: '14 Oct, 10:20', day: 2, who: 'Tom Fletcher', action: 'Invited a new user', record: 'Kate Morris', area: 'Users', source: 'System Admin', before: [['Role', '— → Office Admin'], ['Team', '— → Office Admin']] },
   { id: 'a19', when: '14 Oct, 17:45', day: 2, who: 'Sarah Mitchell', action: 'Closed a job and published the guarantee', record: 'JG-10455 · Mr Khan', area: 'Jobs', source: 'Office Admin' },
   { id: 'a18', when: '13 Oct, 15:10', day: 3, who: 'Sarah Mitchell', action: 'Changed a fitting date', record: 'JG-10482', area: 'Jobs', source: 'Office Admin', before: [['Fitting', 'Wed 21 Oct → Thu 22 – Fri 23 Oct']], reason: 'Frames arrive 20 Oct' },
   { id: 'a17', when: '13 Oct, 11:00', day: 3, who: 'Tom Fletcher', action: 'Edited a message template', record: 'Fitting booked', area: 'Settings', source: 'System Admin', before: [['Wording', 'Added "confirm the dates in your portal"']] },
   { id: 'a16', when: '12 Oct, 15:30', day: 4, who: 'Tom Fletcher', action: 'Ignored a sync error', record: 'SE-216', area: 'Integrations', source: 'System Admin', reason: 'Test version made in Framepoint by mistake' },
   { id: 'a15', when: '06 Oct, 11:00', day: 10, who: 'Sarah Mitchell', action: 'Recorded a supplier order', record: 'JG-10482 · SO-48238', area: 'Jobs', source: 'Office Admin' },
-  { id: 'a14', when: '01 Oct, 09:30', day: 15, who: 'James Whitfield', action: 'Approved a role change', record: 'Sales role', area: 'Roles', source: 'Director', before: [['Payments (from Xero)', 'No access → Only theirs']] },
+  { id: 'a14', when: '01 Oct, 09:30', day: 15, who: 'Tom Fletcher', action: 'Added a user', record: 'Sam Price', area: 'Users', source: 'System Admin', before: [['Role', '— → Installer · Fitter'], ['Team', '— → Installers']] },
   { id: 'a13', when: '30 Sep, 17:10', day: 16, who: 'Tom Fletcher', action: 'Deactivated a user', record: 'Gary Wells', area: 'Users', source: 'System Admin', before: [['Status', 'Active → Deactivated'], ['Customers', 'Gary Wells → Emma Clarke']], reason: 'Left the company' },
   { id: 'a12', when: '30 Sep, 16:40', day: 16, who: 'Mike Harris', action: 'Marked a deal as Won', record: 'EN-2283 · Sarah & David Smith', area: 'Jobs', source: 'Sales portal', before: [['Stage', 'Quote Sent → Won']] },
 ];

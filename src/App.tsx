@@ -4,7 +4,6 @@ import { AppLayout } from './components/Layout';
 import { Login, Welcome } from './pages/Auth';
 import Overview from './pages/Overview';
 import Users, { UserDetail } from './pages/Users';
-import Roles from './pages/Roles';
 import Teams from './pages/Teams';
 import Statuses from './pages/Statuses';
 import Checklists from './pages/Checklists';
@@ -22,7 +21,7 @@ export default function App() {
         <Route path="/" element={<Overview />} />
         <Route path="/users" element={<Users />} />
         <Route path="/users/:id" element={<UserDetail />} />
-        <Route path="/roles" element={<Roles />} />
+        <Route path="/roles" element={<Navigate to="/teams" replace />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/statuses" element={<Statuses />} />
         <Route path="/checklists" element={<Checklists />} />

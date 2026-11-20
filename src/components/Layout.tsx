@@ -1,18 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
-  IconLayoutDashboard, IconUsers, IconShieldLock, IconUsersGroup, IconListDetails, IconChecklist, IconPlugConnected, IconAlertTriangle, IconHistory,
+  IconLayoutDashboard, IconUsers, IconUsersGroup, IconListDetails, IconChecklist, IconPlugConnected, IconAlertTriangle, IconHistory,
   IconDatabaseImport, IconLock, IconDatabase, IconSettings, IconSearch, IconBell, IconMenu2, IconChevronRight, IconArrowRight, IconHelpCircle,
   IconLogout, IconUser, IconRefresh, IconSelector, IconUserX, IconMailForward,
 } from '@tabler/icons-react';
 import { useStore } from '../data/store';
-import { IMG, me } from '../data/admin';
+import { IMG, me, roleLabel } from '../data/admin';
 import { Avatar, Tile, Tag } from './ui';
 
 type NavDef = { to: string; label: string; icon: any; end?: boolean };
 const NAV: { section: string; items: NavDef[] }[] = [
   { section: 'Main', items: [{ to: '/', label: 'Overview', icon: IconLayoutDashboard, end: true }] },
-  { section: 'People', items: [{ to: '/users', label: 'Users', icon: IconUsers }, { to: '/roles', label: 'Roles and permissions', icon: IconShieldLock }, { to: '/teams', label: 'Teams', icon: IconUsersGroup }] },
+  { section: 'People', items: [{ to: '/users', label: 'Users', icon: IconUsers }, { to: '/teams', label: 'Teams', icon: IconUsersGroup }] },
   { section: 'Set-up', items: [{ to: '/statuses', label: 'Statuses and templates', icon: IconListDetails }, { to: '/checklists', label: 'Checklists', icon: IconChecklist }] },
   { section: 'Connections', items: [{ to: '/integrations', label: 'Integrations', icon: IconPlugConnected }, { to: '/sync-errors', label: 'Sync errors', icon: IconAlertTriangle }] },
   { section: 'Records', items: [{ to: '/audit', label: 'Audit history', icon: IconHistory }, { to: '/import', label: 'Data import', icon: IconDatabaseImport }] },
@@ -84,7 +84,7 @@ export function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle:
 }
 
 const PAGES = [
-  ['Overview', '/'], ['Users', '/users'], ['Customer portal sign-in', '/users?tab=customers'], ['Roles and permissions', '/roles'], ['Teams', '/teams'],
+  ['Overview', '/'], ['Users', '/users'], ['Customer portal sign-in', '/users?tab=customers'], ['Teams', '/teams'], ['What each team can do', '/teams?role=Office%20Admin'],
   ['Statuses and templates', '/statuses'], ['Message templates', '/statuses?tab=templates'], ['What customers see', '/statuses?tab=customers'], ['Checklists', '/checklists'],
   ['Integrations', '/integrations'], ['Framepoint', '/integrations/framepoint'], ['Microsoft 365 · Outlook', '/integrations/microsoft'], ['Xero', '/integrations/xero'],
   ['Sync errors', '/sync-errors'], ['Audit history', '/audit'], ['Data import', '/import'], ['Sign-in and security', '/security'], ['Backups and privacy', '/backups'], ['My settings', '/settings'],
@@ -105,7 +105,7 @@ function CommandSearch({ onClose }: { onClose: () => void }) {
       <div className="cmd" onMouseDown={e => e.stopPropagation()}>
         <div className="hstack" style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', gap: 10 }}>
           <IconSearch size={18} color="#6b7a78" />
-          <input ref={ref} value={q} onChange={e => setQ(e.target.value)} placeholder="Search people, roles or settings…" aria-label="Search" style={{ border: 0, outline: 0, fontSize: 15, flex: 1 }} />
+          <input ref={ref} value={q} onChange={e => setQ(e.target.value)} placeholder="Search people, teams or settings…" aria-label="Search" style={{ border: 0, outline: 0, fontSize: 15, flex: 1 }} />
           <kbd className="tiny muted">Esc</kbd>
         </div>
         <div style={{ maxHeight: 420, overflowY: 'auto', padding: 8 }}>
@@ -113,7 +113,7 @@ function CommandSearch({ onClose }: { onClose: () => void }) {
           {u.map(x => (
             <button key={x.id} onClick={() => go(`/users/${x.id}`)} className="nav-item" style={{ width: '100%', border: 0, background: 'none', height: 50, gap: 12 }}>
               <Avatar i={x.initials} size={34} />
-              <div className="vstack" style={{ alignItems: 'flex-start', gap: 1 }}><b style={{ fontSize: 13 }}>{x.name}</b><span className="tiny muted">{x.role} · {x.team}</span></div>
+              <div className="vstack" style={{ alignItems: 'flex-start', gap: 1 }}><b style={{ fontSize: 13 }}>{x.name}</b><span className="tiny muted">{roleLabel(x)} · {x.team} team</span></div>
               <span style={{ marginLeft: 'auto' }}><Tag tone={x.status === 'Active' ? 'ok' : x.status === 'Deactivated' ? 'grey' : 'warn'}>{x.status}</Tag></span>
             </button>
           ))}

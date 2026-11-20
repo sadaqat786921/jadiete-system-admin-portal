@@ -3,8 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import * as D from './admin';
 
 const fresh = () => ({
-  users: D.USERS0, teams: D.TEAMS0, custs: D.CUSTS0,
-  matrix: D.MATRIX0, scope: D.SCOPE0, sysData: false,
+  users: D.USERS0, custs: D.CUSTS0, sysData: false,
   stages: D.SALES_STAGES0, journey: D.JOURNEY0, lists: D.LISTS0, docvis: D.DOCVIS0, tpls: D.TPL0, checklists: D.CHECKLISTS0,
   integ: D.INTEG0, mailboxes: D.MAILBOXES0, calOwner: 'Jadeite', errs: D.ERRS0,
   audit: D.AUDIT0, imports: D.IMPORTS0, security: D.SECURITY0,
@@ -12,7 +11,7 @@ const fresh = () => ({
   notifsRead: false, myPrefs: { errors: true, locked: true, backups: true, weekly: false },
 });
 export type State = ReturnType<typeof fresh>;
-const KEY = 'jadeite-system-admin-v1';
+const KEY = 'jadeite-system-admin-v2';
 const load = (): State => { try { const s = sessionStorage.getItem(KEY); if (s) return { ...fresh(), ...JSON.parse(s) }; } catch { /* ignore */ } return structuredClone(fresh()); };
 
 type Ctx = State & {
